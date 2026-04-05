@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Animal Heads Up!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --sky: #4FC3F7;
+    --grass: #66BB6A;
+    --sun: #FFD54F;
+    --coral: #FF7043;
+    --purple: #AB47BC;
+    --white: #FFFDE7;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Floating clouds */
+  .cloud {
+    position: fixed;
+    background: white;
+    border-radius: 50px;
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .cloud::before, .cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+  }
+  .c1 { width: 100px; height: 35px; top: 8%; left: -120px; animation: drift 18s linear infinite; }
+  .c1::before { width: 50px; height: 50px; top: -25px; left: 10px; }
+  .c1::after { width: 35px; height: 35px; top: -15px; left: 40px; }
+  .c2 { width: 80px; height: 28px; top: 20%; left: -100px; animation: drift 25s linear infinite 8s; }
+  .c2::before { width: 40px; height: 40px; top: -20px; left: 8px; }
+  .c2::after { width: 28px; height: 28px; top: -12px; left: 32px; }
+  .c3 { width: 120px; height: 40px; top: 5%; left: -140px; animation: drift 22s linear infinite 4s; }
+  .c3::before { width: 60px; height: 60px; top: -30px; left: 15px; }
+  .c3::after { width: 40px; height: 40px; top: -18px; left: 55px; }
+
+  @keyframes drift {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100vw + 200px)); }
+  }
+
+  /* Ground */
+  .ground {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: var(--grass);
+    border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+    z-index: 0;
+  }
+  .ground::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 0;
+    width: 100%;
+    height: 16px;
+    background: #81C784;
+    border-radius: 50%;
+  }
+
+  /* === SCREENS === */
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .screen.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* HOME */
+  #homeScreen { gap: 20px; }
+
+  .game-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.5rem, 10vw, 4.5rem);
+    color: white;
+    text-shadow: 4px 4px 0px rgba(0,0,0,0.15), 0 0 30px rgba(255,255,255,0.3);
+    text-align: center;
+    line-height: 1.1;
+    letter-spacing: 1px;
+  }
+  .title-animal {
+    font-size: clamp(3rem, 14vw, 6rem);
+    display: block;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    animation: bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  .subtitle {
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    color: rgba(255,255,255,0.9);
+    font-weight: 700;
+    text-align: center;
+    background: rgba(0,0,0,0.12);
+    padding: 8px 20px;
+    border-radius: 20px;
+  }
+
+  .btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.3rem, 5vw, 1.8rem);
+    padding: 16px 50px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+
+  .btn-play {
+    background: var(--sun);
+    color: #5D4037;
+    font-size: clamp(1.5rem, 6vw, 2.2rem);
+    padding: 20px 60px;
+  }
+  .btn-settings {
+    background: white;
+    color: var(--purple);
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    padding: 12px 30px;
+  }
+
+  /* PERMISSION */
+  #permScreen { gap: 20px; }
+  .perm-card {
+    background: white;
+    border-radius: 28px;
+    padding: 28px 24px;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    text-align: center;
+  }
+  .perm-card .perm-icon { font-size: 4rem; margin-bottom: 8px; }
+  .perm-card h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    color: var(--purple);
+    margin-bottom: 10px;
+  }
+  .perm-card p {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #777;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+  .perm-status {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 12px;
+    display: inline-block;
+  }
+  .perm-status.granted { background: #E8F5E9; color: #388E3C; }
+  .perm-status.denied  { background: #FBE9E7; color: #BF360C; }
+  .perm-status.waiting { background: #F3E5F5; color: #7B1FA2; }
+
+  /* HOW TO PLAY */
+  #howScreen { gap: 16px; }
+  .how-card {
+    background: white;
+    border-radius: 24px;
+    padding: 20px 28px;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  }
+  .how-card h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    color: var(--purple);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .how-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #555;
+  }
+  .step-icon { font-size: 1.6rem; flex-shrink: 0; }
+
+  /* GAME */
+  #gameScreen {
+    background: transparent;
+    gap: 0;
+  }
+
+  .game-card {
+    width: min(95vw, 420px);
+    background: white;
+    border-radius: 32px;
+    padding: 28px 24px 24px;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.2), 0 0 0 6px rgba(255,255,255,0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 20;
+  }
+
+  .timer-ring {
+    position: relative;
+    width: 80px;
+    height: 80px;
+  }
+  .timer-ring svg {
+    transform: rotate(-90deg);
+    width: 80px;
+    height: 80px;
+  }
+  .timer-ring .bg { fill: none; stroke: #EEE; stroke-width: 6; }
+  .timer-ring .prog {
+    fill: none;
+    stroke: var(--coral);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 220;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear, stroke 0.5s;
+  }
+  .timer-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: #444;
+  }
+
+  .animal-emoji {
+    font-size: clamp(5rem, 22vw, 8rem);
+    line-height: 1;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
+    animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
+  }
+  @keyframes pop {
+    0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .animal-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 9vw, 3.2rem);
+    color: #333;
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  .animal-hint {
+    font-size: clamp(0.85rem, 3.5vw, 1rem);
+    color: #888;
+    font-weight: 700;
+    text-align: center;
+    background: #F5F5F5;
+    padding: 6px 16px;
+    border-radius: 12px;
+    width: 100%;
+  }
+
+  .game-btns {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .btn-got { background: var(--grass); color: white; flex: 1; padding: 14px; font-size: 1.1rem; }
+  .btn-skip { background: #EEE; color: #999; flex: 0.6; padding: 14px; font-size: 1rem; }
+
+  .tilt-hint {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.85);
+    font-weight: 700;
+    text-align: center;
+    background: rgba(0,0,0,0.12);
+    padding: 6px 14px;
+    border-radius: 12px;
+    margin-top: 10px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.7} 50%{opacity:1} }
+
+  /* Flash overlay */
+  .flash {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    border-radius: 0;
+  }
+  .flash.got { background: rgba(102,187,106,0.5); }
+  .flash.skip { background: rgba(255,112,67,0.4); }
+  .flash.active { animation: flashAnim 0.5s ease-out; }
+  @keyframes flashAnim {
+    0% { opacity: 1; } 100% { opacity: 0; }
+  }
+
+  /* RESULT */
+  #resultScreen { gap: 16px; }
+  .result-card {
+    background: white;
+    border-radius: 28px;
+    padding: 28px 24px;
+    max-width: 380px;
+    width: 100%;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    text-align: center;
+  }
+  .result-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.5rem;
+    color: var(--purple);
+    margin-bottom: 4px;
+  }
+  .result-score {
+    font-family: 'Fredoka One', cursive;
+    font-size: 4rem;
+    color: var(--coral);
+    line-height: 1;
+  }
+  .result-label { font-size: 1rem; color: #888; font-weight: 700; margin-bottom: 16px; }
+  .result-list {
+    list-style: none;
+    max-height: 180px;
+    overflow-y: auto;
+    text-align: left;
+    margin-bottom: 16px;
+  }
+  .result-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #F0F0F0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #555;
+  }
+  .result-list .got-icon { color: var(--grass); }
+  .result-list .skip-icon { color: #CCC; }
+
+  /* SETTINGS */
+  #settingsScreen { gap: 16px; }
+  .settings-card {
+    background: white;
+    border-radius: 28px;
+    padding: 28px 24px;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  }
+  .settings-card h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: var(--purple);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+  }
+  .setting-label {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #555;
+    flex: 1;
+  }
+  .setting-label span { display: block; font-size: 0.8rem; font-weight: 600; color: #AAA; }
+
+  .time-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .time-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--sky);
+    color: white;
+    font-size: 1.4rem;
+    font-family: 'Fredoka One', cursive;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+    transition: transform 0.1s;
+  }
+  .time-btn:active { transform: translateY(2px); box-shadow: none; }
+  .time-val {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: #333;
+    min-width: 50px;
+    text-align: center;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toggle {
+    position: relative;
+    width: 52px;
+    height: 28px;
+  }
+  .toggle input { display: none; }
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #DDD;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 22px; height: 22px;
+    background: white;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .toggle input:checked + .toggle-slider { background: var(--grass); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(24px); }
+
+  .divider { border: none; border-top: 2px solid #F0F0F0; margin: 4px 0 16px; }
+
+  /* Score badge */
+  .score-badge {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 16px;
+    padding: 6px 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--coral);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+    z-index: 30;
+    display: none;
+  }
+  #gameScreen.active ~ .score-badge { display: block; }
+
+  /* Permission prompt */
+  .perm-msg {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.8);
+    text-align: center;
+    max-width: 280px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+
+<!-- Clouds -->
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+<div class="cloud c3"></div>
+<div class="ground"></div>
+
+<!-- Flash overlay -->
+<div class="flash" id="flash"></div>
+
+<!-- Score badge (visible during game) -->
+<div class="score-badge" id="scoreBadge">⭐ 0</div>
+
+<!-- HOME -->
+<div class="screen active" id="homeScreen">
+  <span class="title-animal">🦁</span>
+  <h1 class="game-title">Animal<br>Heads Up!</h1>
+  <p class="subtitle">🐾 Guess the animal before time runs out!</p>
+  <button class="btn btn-play" onclick="onPlayTapped()">▶ PLAY!</button>
+  <button class="btn btn-settings" onclick="showSettings()">⚙️ Settings</button>
+</div>
+
+<!-- PERMISSION -->
+<div class="screen" id="permScreen">
+  <div class="perm-card">
+    <div class="perm-icon">📱</div>
+    <h2>Motion Access</h2>
+    <p>This game uses your phone's tilt sensor to detect when you guess an animal!</p>
+    <p>Tap the button below and then tap <strong>"Allow"</strong> when your phone asks.</p>
+    <div class="perm-status waiting" id="permStatus">Waiting for permission…</div>
+  </div>
+  <button class="btn btn-play" id="permBtn" onclick="requestMotionPermission()">📲 Allow Tilting!</button>
+  <button class="btn btn-settings" style="margin-top:8px" onclick="skipPermission()">Skip (use buttons only)</button>
+</div>
+
+<!-- HOW TO PLAY -->
+<div class="screen" id="howScreen">
+  <div class="how-card">
+    <h2>How to Play! 🎉</h2>
+    <div class="how-step"><span class="step-icon">📱</span><span>Hold your phone UP to your forehead</span></div>
+    <div class="how-step"><span class="step-icon">👀</span><span>Friends give clues — NO saying the word!</span></div>
+    <div class="how-step"><span class="step-icon">⬇️</span><span>Tilt phone DOWN to get the next animal</span></div>
+    <div class="how-step"><span class="step-icon">⬆️</span><span>Tilt phone UP to skip (no point)</span></div>
+    <div class="how-step"><span class="step-icon">⭐</span><span>Score as many as you can!</span></div>
+  </div>
+  <button class="btn btn-play" onclick="startGame()">Let's Go! 🚀</button>
+  <button class="btn btn-settings" style="margin-top:8px" onclick="showScreen('homeScreen')">← Back</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="gameScreen">
+  <div class="game-card">
+    <div class="timer-ring">
+      <svg viewBox="0 0 80 80">
+        <circle class="bg" cx="40" cy="40" r="35"/>
+        <circle class="prog" id="timerProg" cx="40" cy="40" r="35"/>
+      </svg>
+      <div class="timer-text" id="timerText">60</div>
+    </div>
+
+    <div class="animal-emoji" id="animalEmoji">🦁</div>
+    <div class="animal-name" id="animalName">Lion</div>
+    <div class="animal-hint" id="animalHint">🌍 Lives in Africa · King of the Savanna</div>
+
+    <div class="game-btns">
+      <button class="btn btn-got" onclick="gotIt()">✅ Got It!</button>
+      <button class="btn btn-skip" onclick="skipIt()">⏭ Skip</button>
+    </div>
+  </div>
+  <div class="tilt-hint" id="tiltHint">📱 Tilt DOWN = next · Tilt UP = skip</div>
+  <div id="debugPanel" style="margin-top:10px;background:rgba(0,0,0,0.6);color:#0f0;font-family:monospace;font-size:0.75rem;padding:8px 14px;border-radius:12px;text-align:left;min-width:220px;display:none;">
+    <div id="dbgStatus">⏳ Waiting for motion events...</div>
+    <div id="dbgXYZ">x: — &nbsp; y: — &nbsp; z: —</div>
+    <div id="dbgTrigger" style="color:#FFD54F">Last: none</div>
+  </div>
+  <button onclick="toggleDebug()" style="margin-top:6px;background:rgba(0,0,0,0.3);color:white;border:none;border-radius:10px;padding:4px 12px;font-size:0.75rem;cursor:pointer;">🔧 Debug</button>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="resultScreen">
+  <div class="result-card">
+    <div class="result-title">Time's Up! 🎊</div>
+    <div class="result-score" id="finalScore">0</div>
+    <div class="result-label">animals guessed!</div>
+    <ul class="result-list" id="resultList"></ul>
+  </div>
+  <button class="btn btn-play" onclick="startGame()">Play Again! 🔄</button>
+  <button class="btn btn-settings" style="margin-top:8px" onclick="showScreen('homeScreen')">🏠 Home</button>
+</div>
+
+<!-- SETTINGS -->
+<div class="screen" id="settingsScreen">
+  <div class="settings-card">
+    <h2>⚙️ Settings</h2>
+
+    <div class="setting-row">
+      <div class="setting-label">Timer <span>Seconds per round</span></div>
+      <div class="time-picker">
+        <button class="time-btn" onclick="adjustTime(-10)">−</button>
+        <div class="time-val" id="timeVal">60</div>
+        <button class="time-btn" onclick="adjustTime(10)">+</button>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="setting-row">
+      <div class="setting-label">Sound Effects <span>Woosh & ding sounds</span></div>
+      <div class="toggle-row">
+        <label class="toggle">
+          <input type="checkbox" id="soundToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">Show Hints <span>Animal fun facts</span></div>
+      <div class="toggle-row">
+        <label class="toggle">
+          <input type="checkbox" id="hintsToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="setting-row" style="margin-bottom:0">
+      <div class="setting-label">Difficulty <span>Card set</span></div>
+      <select id="diffSelect" style="font-family:'Nunito',sans-serif;font-size:0.95rem;font-weight:700;padding:6px 10px;border-radius:12px;border:2px solid #EEE;color:#555;background:white;cursor:pointer;">
+        <option value="easy">🐾 Easy</option>
+        <option value="medium">🌿 Medium</option>
+        <option value="hard">🔬 Hard</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn btn-play" onclick="saveSettings()">Save & Go Home ✅</button>
+</div>
+
+<script>
+// ===== ANIMALS =====
+const ANIMALS = {
+  easy: [
+    { e:'🐶', n:'Dog', h:'🏠 A loyal pet · Goes woof!' },
+    { e:'🐱', n:'Cat', h:'🏠 Meows & purrs · Loves naps' },
+    { e:'🐮', n:'Cow', h:'🌾 Says moo · Gives us milk' },
+    { e:'🐷', n:'Pig', h:'🌾 Says oink · Loves mud' },
+    { e:'🐸', n:'Frog', h:'💧 Jumps high · Says ribbit' },
+    { e:'🐧', n:'Penguin', h:'🧊 Can\'t fly · Swims fast' },
+    { e:'🐯', n:'Tiger', h:'🌿 Has stripes · Loves water' },
+    { e:'🦁', n:'Lion', h:'🌍 King of the jungle · Roars loud' },
+    { e:'🐘', n:'Elephant', h:'🌍 Never forgets · Has a trunk' },
+    { e:'🦒', n:'Giraffe', h:'🌍 Tallest animal · Has a long neck' },
+    { e:'🐬', n:'Dolphin', h:'🌊 Very smart · Does tricks' },
+    { e:'🐻', n:'Bear', h:'🌲 Loves honey · Hibernates in winter' },
+    { e:'🦊', n:'Fox', h:'🌲 Very clever · Has a bushy tail' },
+    { e:'🐰', n:'Rabbit', h:'🌿 Hops around · Has long ears' },
+    { e:'🦆', n:'Duck', h:'💧 Says quack · Can swim & fly' },
+    { e:'🐢', n:'Turtle', h:'🌊 Very slow · Carries its home' },
+    { e:'🦋', n:'Butterfly', h:'🌸 Was a caterpillar · Has pretty wings' },
+    { e:'🐝', n:'Bee', h:'🌸 Makes honey · Lives in a hive' },
+    { e:'🐠', n:'Fish', h:'🌊 Lives underwater · Can\'t blink' },
+    { e:'🐦', n:'Bird', h:'🌿 Has feathers · Can fly' },
+  ],
+  medium: [
+    { e:'🦓', n:'Zebra', h:'🌍 Has black & white stripes · Lives in Africa' },
+    { e:'🦏', n:'Rhino', h:'🌍 Has a big horn · Very heavy' },
+    { e:'🦛', n:'Hippo', h:'🌊 Loves water · Opens huge mouth' },
+    { e:'🦘', n:'Kangaroo', h:'🇦🇺 From Australia · Has a pouch' },
+    { e:'🦔', n:'Hedgehog', h:'🌿 Has spiky quills · Curls into a ball' },
+    { e:'🦥', n:'Sloth', h:'🌴 World\'s slowest animal · Sleeps 20 hrs a day' },
+    { e:'🦩', n:'Flamingo', h:'🌸 Pink feathers · Stands on one leg' },
+    { e:'🦜', n:'Parrot', h:'🌴 Can talk · Very colorful feathers' },
+    { e:'🐊', n:'Crocodile', h:'💧 Has 80 sharp teeth · Can\'t chew food' },
+    { e:'🦈', n:'Shark', h:'🌊 Top ocean predator · Never stops moving' },
+    { e:'🐙', n:'Octopus', h:'🌊 Has 8 arms · Can change color' },
+    { e:'🦑', n:'Squid', h:'🌊 Shoots ink · Has 10 tentacles' },
+    { e:'🦀', n:'Crab', h:'🏖️ Walks sideways · Has big claws' },
+    { e:'🦞', n:'Lobster', h:'🌊 Lives in the ocean · Has a hard shell' },
+    { e:'🐿️', n:'Squirrel', h:'🌰 Collects acorns · Has a fluffy tail' },
+    { e:'🦦', n:'Otter', h:'🌊 Holds hands while sleeping · Loves fish' },
+    { e:'🐺', n:'Wolf', h:'🌲 Howls at the moon · Lives in packs' },
+    { e:'🦅', n:'Eagle', h:'🏔️ Has incredible eyesight · National symbol of USA' },
+    { e:'🦉', n:'Owl', h:'🌙 Hunts at night · Can rotate its head far' },
+    { e:'🐐', n:'Goat', h:'🏔️ Can climb steep mountains · Eats almost anything' },
+  ],
+  hard: [
+    { e:'🦙', n:'Llama', h:'🏔️ From South America · Spits when annoyed' },
+    { e:'🦬', n:'Bison', h:'🌾 North American buffalo · Once nearly extinct' },
+    { e:'🫎', n:'Moose', h:'🌲 Largest deer species · Has huge antlers' },
+    { e:'🦤', n:'Dodo', h:'🏝️ Extinct bird · Could not fly' },
+    { e:'🦩', n:'Flamingo', h:'🌸 Gets pink color from food it eats' },
+    { e:'🐡', n:'Pufferfish', h:'🌊 Inflates when scared · Highly poisonous' },
+    { e:'🦭', n:'Seal', h:'🧊 Barks like a dog · Loves fish & cold water' },
+    { e:'🐇', n:'Hare', h:'🌿 Faster than a rabbit · Born with eyes open' },
+    { e:'🦚', n:'Peacock', h:'🌿 Has spectacular tail feathers · Screams loudly' },
+    { e:'🦃', n:'Turkey', h:'🍂 Can fly short distances · Native to North America' },
+    { e:'🐾', n:'Panda', h:'🎋 Eats only bamboo · From China' },
+    { e:'🦨', n:'Skunk', h:'🌲 Sprays a horrible smell · Black & white stripes' },
+    { e:'🦡', n:'Badger', h:'🌿 Digs underground homes · Very fierce for its size' },
+    { e:'🦫', n:'Beaver', h:'💧 Builds dams · Has a flat tail' },
+    { e:'🐏', n:'Ram', h:'🏔️ Male sheep · Has curly horns' },
+    { e:'🐓', n:'Rooster', h:'🌅 Crows at sunrise · Male chicken' },
+    { e:'🦌', n:'Deer', h:'🌲 Has antlers · Lives in forests' },
+    { e:'🐃', n:'Water Buffalo', h:'🌾 Used on farms in Asia · Loves mud' },
+    { e:'🦋', n:'Monarch Butterfly', h:'🌸 Migrates thousands of miles · Orange & black' },
+    { e:'🐝', n:'Bumblebee', h:'🌸 Pollinates flowers · Lives in colonies' },
+  ]
+};
+
+// ===== STATE =====
+let settings = { time: 60, sound: true, hints: true, diff: 'easy' };
+let gameState = {};
+let timerInterval = null;
+
+// Load from localStorage if available
+try {
+  const saved = localStorage.getItem('huSettings');
+  if (saved) settings = { ...settings, ...JSON.parse(saved) };
+} catch(e) {}
+
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx;
+
+function getCtx() {
+  if (!ctx) ctx = new AudioCtx();
+  return ctx;
+}
+
+function playTone(freq, type, dur, vol=0.3) {
+  if (!settings.sound) return;
+  try {
+    const c = getCtx();
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.connect(gain); gain.connect(c.destination);
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, c.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+    osc.start(); osc.stop(c.currentTime + dur);
+  } catch(e) {}
+}
+
+function playGot() { playTone(880, 'sine', 0.3, 0.4); setTimeout(()=>playTone(1100,'sine',0.3,0.4),150); }
+function playSkip() { playTone(300, 'sawtooth', 0.25, 0.3); }
+function playEnd() {
+  [523,659,784,1047].forEach((f,i) => setTimeout(()=>playTone(f,'sine',0.4,0.35), i*120));
+}
+function playTick() { playTone(440,'square',0.05,0.1); }
+
+// ===== MOTION PERMISSION STATE =====
+let motionPermission = 'unknown'; // 'unknown' | 'granted' | 'denied' | 'noapi'
+
+// Check if DeviceMotionEvent.requestPermission exists (iOS 13+)
+const needsPermission = (typeof DeviceMotionEvent !== 'undefined' &&
+                         typeof DeviceMotionEvent.requestPermission === 'function');
+
+// ===== SCREENS =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// Called when PLAY is tapped on home screen
+function onPlayTapped() {
+  if (!needsPermission) {
+    // Android / desktop — no permission needed, go straight to how-to
+    motionPermission = 'granted';
+    setupMotion();
+    showScreen('howScreen');
+  } else if (motionPermission === 'granted') {
+    // Already granted this session
+    showScreen('howScreen');
+  } else {
+    // iOS — must show permission screen first
+    showScreen('permScreen');
+  }
+}
+
+// Called by the "Allow Tilting!" button — MUST be a direct user gesture
+function requestMotionPermission() {
+  if (!needsPermission) {
+    motionPermission = 'granted';
+    setupMotion();
+    showScreen('howScreen');
+    return;
+  }
+  // iOS: call requestPermission directly inside this click handler
+  DeviceMotionEvent.requestPermission()
+    .then(response => {
+      const statusEl = document.getElementById('permStatus');
+      const btn = document.getElementById('permBtn');
+      if (response === 'granted') {
+        motionPermission = 'granted';
+        setupMotion();
+        statusEl.textContent = '✅ Permission granted!';
+        statusEl.className = 'perm-status granted';
+        btn.textContent = '▶ Let\'s Play!';
+        btn.onclick = () => showScreen('howScreen');
+        setTimeout(() => showScreen('howScreen'), 800);
+      } else {
+        motionPermission = 'denied';
+        statusEl.textContent = '❌ Denied — use the Got It / Skip buttons instead';
+        statusEl.className = 'perm-status denied';
+        btn.textContent = '▶ Play with Buttons';
+        btn.onclick = skipPermission;
+      }
+    })
+    .catch(() => {
+      motionPermission = 'denied';
+      const statusEl = document.getElementById('permStatus');
+      statusEl.textContent = '⚠️ Could not get permission — use buttons';
+      statusEl.className = 'perm-status denied';
+    });
+}
+
+function skipPermission() {
+  motionPermission = 'denied';
+  showScreen('howScreen');
+}
+
+function showHow() { showScreen('howScreen'); }
+
+function showSettings() {
+  document.getElementById('timeVal').textContent = settings.time;
+  document.getElementById('soundToggle').checked = settings.sound;
+  document.getElementById('hintsToggle').checked = settings.hints;
+  document.getElementById('diffSelect').value = settings.diff;
+  showScreen('settingsScreen');
+}
+
+function saveSettings() {
+  settings.time = parseInt(document.getElementById('timeVal').textContent);
+  settings.sound = document.getElementById('soundToggle').checked;
+  settings.hints = document.getElementById('hintsToggle').checked;
+  settings.diff = document.getElementById('diffSelect').value;
+  try { localStorage.setItem('huSettings', JSON.stringify(settings)); } catch(e) {}
+  showScreen('homeScreen');
+}
+
+function adjustTime(delta) {
+  const el = document.getElementById('timeVal');
+  let val = parseInt(el.textContent) + delta;
+  val = Math.max(10, Math.min(120, val));
+  el.textContent = val;
+}
+
+// ===== GAME =====
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  // Motion already set up via permission flow — just ensure it's active
+  if (motionPermission === 'granted') setupMotion();
+
+  gameState = {
+    deck: shuffle(ANIMALS[settings.diff]),
+    index: 0,
+    score: 0,
+    timeLeft: settings.time,
+    log: [],
+    started: true,
+    tiltCooldown: false,
+  };
+
+  document.getElementById('scoreBadge').style.display = 'block';
+  showScreen('gameScreen');
+  updateCard();
+  startTimer();
+  requestWakeLock();
+}
+
+function updateCard() {
+  const animal = gameState.deck[gameState.index % gameState.deck.length];
+  const emojiEl = document.getElementById('animalEmoji');
+  const nameEl = document.getElementById('animalName');
+  const hintEl = document.getElementById('animalHint');
+
+  emojiEl.textContent = animal.e;
+  emojiEl.style.animation = 'none';
+  void emojiEl.offsetWidth;
+  emojiEl.style.animation = '';
+
+  nameEl.textContent = animal.n;
+  hintEl.textContent = settings.hints ? animal.h : '';
+  hintEl.style.display = settings.hints ? 'block' : 'none';
+
+  document.getElementById('scoreBadge').textContent = `⭐ ${gameState.score}`;
+}
+
+function gotIt() {
+  const animal = gameState.deck[gameState.index % gameState.deck.length];
+  gameState.log.push({ animal, got: true });
+  gameState.score++;
+  gameState.index++;
+  playGot();
+  flashScreen('got');
+  updateCard();
+}
+
+function skipIt() {
+  const animal = gameState.deck[gameState.index % gameState.deck.length];
+  gameState.log.push({ animal, got: false });
+  gameState.index++;
+  playSkip();
+  flashScreen('skip');
+  updateCard();
+}
+
+function flashScreen(type) {
+  const el = document.getElementById('flash');
+  el.className = 'flash ' + type;
+  void el.offsetWidth;
+  el.classList.add('active');
+  setTimeout(() => el.classList.remove('active'), 500);
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  const total = settings.time;
+  const prog = document.getElementById('timerProg');
+  const circumference = 220;
+
+  timerInterval = setInterval(() => {
+    gameState.timeLeft--;
+    const t = gameState.timeLeft;
+    document.getElementById('timerText').textContent = t;
+
+    const pct = t / total;
+    prog.style.strokeDashoffset = circumference * (1 - pct);
+    prog.style.stroke = t <= 10 ? '#e53935' : t <= 20 ? '#FF7043' : '#4FC3F7';
+
+    if (t <= 5) playTick();
+
+    if (t <= 0) {
+      clearInterval(timerInterval);
+      endGame();
+    }
+  }, 1000);
+}
+
+function endGame() {
+  removeMotion();
+  playEnd();
+  document.getElementById('scoreBadge').style.display = 'none';
+
+  document.getElementById('finalScore').textContent = gameState.score;
+  const list = document.getElementById('resultList');
+  list.innerHTML = '';
+  gameState.log.forEach(item => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="${item.got?'got-icon':'skip-icon'}">${item.got?'✅':'⏭'}</span>${item.animal.e} ${item.animal.n}`;
+    list.appendChild(li);
+  });
+
+  showScreen('resultScreen');
+}
+
+// ===== TILT DETECTION =====
+let motionHandler = null;
+
+let debugOn = false;
+function toggleDebug() {
+  debugOn = !debugOn;
+  document.getElementById('debugPanel').style.display = debugOn ? 'block' : 'none';
+}
+
+function setupMotion() {
+  if (motionHandler) window.removeEventListener('devicemotion', motionHandler);
+
+  motionHandler = (e) => {
+    const acc = e.accelerationIncludingGravity;
+
+    // Debug output — always update even outside game
+    if (debugOn && acc) {
+      document.getElementById('dbgStatus').textContent = '✅ Motion events firing!';
+      document.getElementById('dbgXYZ').textContent =
+        `x: ${(acc.x||0).toFixed(2)}  y: ${(acc.y||0).toFixed(2)}  z: ${(acc.z||0).toFixed(2)}`;
+    } else if (debugOn && !acc) {
+      document.getElementById('dbgStatus').textContent = '⚠️ acc is null';
+    }
+
+    if (!gameState.started || gameState.tiltCooldown) return;
+    if (!acc) return;
+
+    const y = acc.y != null ? acc.y : 0;
+    const x = acc.x != null ? acc.x : 0;
+
+    if (Math.abs(y) < 3 && Math.abs(x) < 3) return;
+
+    if (y < -4) {
+      if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: GOT IT (y=${y.toFixed(2)})`;
+      triggerTilt('got');
+    } else if (y > 13) {
+      if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: SKIP (y=${y.toFixed(2)})`;
+      triggerTilt('skip');
+    }
+  };
+
+  window.addEventListener('devicemotion', motionHandler, { passive: true });
+}
+
+function triggerTilt(type) {
+  gameState.tiltCooldown = true;
+  if (type === 'got') gotIt();
+  else skipIt();
+  setTimeout(() => { gameState.tiltCooldown = false; }, 1200);
+}
+
+function removeMotion() {
+  if (motionHandler) window.removeEventListener('devicemotion', motionHandler);
+  gameState.started = false;
+}
+
+// ===== WAKE LOCK =====
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch(e) {}
+}
+
+// Re-request wake lock if page becomes visible again
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') {
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+  }
+});
+</script>
+</body>
+</html>
