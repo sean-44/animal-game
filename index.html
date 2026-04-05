@@ -1009,10 +1009,12 @@ function setupMotion() {
 
     if (Math.abs(y) < 3 && Math.abs(x) < 3) return;
 
-    if (y < -4) {
+    if (y < -7) {
+      // Tilted forward / face-down → Got It! (was -4, now needs more deliberate tilt)
       if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: GOT IT (y=${y.toFixed(2)})`;
       triggerTilt('got');
-    } else if (y > 13) {
+    } else if (y > 15) {
+      // Tilted backward / face-up → Skip (was 13, now needs more deliberate tilt)
       if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: SKIP (y=${y.toFixed(2)})`;
       triggerTilt('skip');
     }
@@ -1025,7 +1027,7 @@ function triggerTilt(type) {
   gameState.tiltCooldown = true;
   if (type === 'got') gotIt();
   else skipIt();
-  setTimeout(() => { gameState.tiltCooldown = false; }, 1200);
+  setTimeout(() => { gameState.tiltCooldown = false; }, 2000);
 }
 
 function removeMotion() {
