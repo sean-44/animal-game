@@ -328,7 +328,56 @@
   }
   @keyframes pulse { 0%,100%{opacity:0.7} 50%{opacity:1} }
 
-  /* Flash overlay */
+  /* LANDSCAPE layout */
+  @media (orientation: landscape) {
+    .ground { height: 40px; }
+
+    #gameScreen { justify-content: center; padding: 8px 16px; }
+
+    .game-card {
+      flex-direction: row;
+      flex-wrap: wrap;
+      width: min(98vw, 700px);
+      padding: 14px 20px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .timer-ring { width: 60px; height: 60px; flex-shrink: 0; }
+    .timer-ring svg { width: 60px; height: 60px; }
+    .timer-text { font-size: 1.1rem; }
+
+    .animal-emoji {
+      font-size: clamp(3rem, 12vh, 5rem);
+      flex-shrink: 0;
+    }
+
+    .animal-name {
+      font-size: clamp(1.6rem, 6vh, 2.4rem);
+      flex: 1;
+      text-align: left;
+    }
+
+    .animal-hint {
+      width: 100%;
+      font-size: 0.8rem;
+      padding: 4px 12px;
+    }
+
+    .game-btns {
+      width: 100%;
+      margin-top: 0;
+    }
+    .btn-got { padding: 10px; font-size: 1rem; }
+    .btn-skip { padding: 10px; font-size: 0.9rem; }
+
+    .tilt-hint { margin-top: 6px; font-size: 0.75rem; padding: 4px 10px; }
+  }
+
+  @media (orientation: landscape) and (max-height: 400px) {
+    .animal-hint { display: none; }
+    .game-card { padding: 10px 16px; gap: 6px; }
+  }
   .flash {
     position: fixed;
     inset: 0;
@@ -992,11 +1041,11 @@ function setupMotion() {
   motionHandler = (e) => {
     const acc = e.accelerationIncludingGravity;
 
-    // Debug output — always update even outside game
     if (debugOn && acc) {
       document.getElementById('dbgStatus').textContent = '✅ Motion events firing!';
+      const orient = screen.orientation ? screen.orientation.angle : window.orientation || 0;
       document.getElementById('dbgXYZ').textContent =
-        `x: ${(acc.x||0).toFixed(2)}  y: ${(acc.y||0).toFixed(2)}  z: ${(acc.z||0).toFixed(2)}`;
+        `x: ${(acc.x||0).toFixed(2)}  y: ${(acc.y||0).toFixed(2)}  z: ${(acc.z||0).toFixed(2)}  orient: ${orient}°`;
     } else if (debugOn && !acc) {
       document.getElementById('dbgStatus').textContent = '⚠️ acc is null';
     }
@@ -1004,19 +1053,50 @@ function setupMotion() {
     if (!gameState.started || gameState.tiltCooldown) return;
     if (!acc) return;
 
-    const y = acc.y != null ? acc.y : 0;
-    const x = acc.x != null ? acc.x : 0;
+    // Detect orientation angle
+    const angle = screen.orientation ? screen.orientation.angle : (window.orientation || 0);
+    const isLandscape = Math.abs(angle) === 90 || Math.abs(angle) === 270;
 
-    if (Math.abs(y) < 3 && Math.abs(x) < 3) return;
+    let tiltAxis, tiltVal;
 
-    if (y < -7) {
-      // Tilted forward / face-down → Got It! (was -4, now needs more deliberate tilt)
-      if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: GOT IT (y=${y.toFixed(2)})`;
-      triggerTilt('got');
-    } else if (y > 15) {
-      // Tilted backward / face-up → Skip (was 13, now needs more deliberate tilt)
-      if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: SKIP (y=${y.toFixed(2)})`;
-      triggerTilt('skip');
+    if (isLandscape) {
+      // Landscape: phone rotated 90°, so x becomes the up/down axis
+      // Held upright to forehead: x ≈ +9.8 (landscape-left) or -9.8 (landscape-right)
+      // Tilt face-down (got it): x moves toward 0 or past 0
+      // Use x for landscape, sign depends on which way they rotated
+      tiltAxis = 'x';
+      tiltVal = acc.x || 0;
+      const absX = Math.abs(tiltVal);
+
+      if (absX < 2) return; // flat — ignore
+
+      // When held upright in landscape, |x| ≈ 9.8
+      // Tilt forward (face down): |x| drops below 4
+      // Tilt backward (face up): |x| goes above 13
+      if (absX < 4) {
+        if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: GOT IT landscape (x=${tiltVal.toFixed(2)})`;
+        triggerTilt('got');
+      } else if (absX > 13) {
+        if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: SKIP landscape (x=${tiltVal.toFixed(2)})`;
+        triggerTilt('skip');
+      }
+
+    } else {
+      // Portrait: y is the up/down axis
+      // Held upright: y ≈ +9.8
+      // Tilt face-down (got it): y drops below -8
+      // Tilt face-up (skip): y exceeds +16 (past vertical backward)
+      tiltVal = acc.y || 0;
+
+      if (Math.abs(tiltVal) < 3) return; // flat — ignore
+
+      if (tiltVal < -8) {
+        if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: GOT IT portrait (y=${tiltVal.toFixed(2)})`;
+        triggerTilt('got');
+      } else if (tiltVal > 16) {
+        if (debugOn) document.getElementById('dbgTrigger').textContent = `Last: SKIP portrait (y=${tiltVal.toFixed(2)})`;
+        triggerTilt('skip');
+      }
     }
   };
 
